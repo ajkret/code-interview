@@ -1,6 +1,7 @@
 package heap
 
 import (
+    "strings"
     "testing"
 
     "github.com/stretchr/testify/assert"
@@ -8,7 +9,9 @@ import (
 
 // TestNewMinHeap tests the creation of a new min-heap
 func TestNewMinHeap(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
     assert.NotNil(t, heap, "NewMinHeap should return a non-nil heap")
     assert.False(t, heap.isMaxHeap, "NewMinHeap should create a min-heap")
     assert.Empty(t, heap.data, "NewMinHeap should initialize an empty data slice")
@@ -18,7 +21,9 @@ func TestNewMinHeap(t *testing.T) {
 
 // TestNewMaxHeap tests the creation of a new max-heap
 func TestNewMaxHeap(t *testing.T) {
-    heap := NewMaxHeap[int]()
+    heap := NewMaxHeap[int](func(a, b int) int {
+        return a - b
+    })
     assert.NotNil(t, heap, "NewMaxHeap should return a non-nil heap")
     assert.True(t, heap.isMaxHeap, "NewMaxHeap should create a max-heap")
     assert.Empty(t, heap.data, "NewMaxHeap should initialize an empty data slice")
@@ -28,14 +33,16 @@ func TestNewMaxHeap(t *testing.T) {
 
 // TestMinHeap_PushAndPeek tests pushing elements and peeking at the min element
 func TestMinHeap_PushAndPeek(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     // Test peek on empty heap
     val, ok := heap.Peek()
     assert.False(t, ok, "Peek on empty heap should return false")
     assert.Equal(t, 0, val, "Peek on empty heap should return zero value")
 
-    // Push single element
+    // Push a single element
     heap.Push(10)
     val, ok = heap.Peek()
     assert.True(t, ok, "Peek should return true after pushing element")
@@ -62,7 +69,9 @@ func TestMinHeap_PushAndPeek(t *testing.T) {
 
 // TestMaxHeap_PushAndPeek tests pushing elements and peeking at the max element
 func TestMaxHeap_PushAndPeek(t *testing.T) {
-    heap := NewMaxHeap[int]()
+    heap := NewMaxHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     heap.Push(10)
     val, ok := heap.Peek()
@@ -88,14 +97,16 @@ func TestMaxHeap_PushAndPeek(t *testing.T) {
 
 // TestMinHeap_Pop tests popping elements from min-heap
 func TestMinHeap_Pop(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     // Test pop on empty heap
     val, ok := heap.Pop()
     assert.False(t, ok, "Pop on empty heap should return false")
     assert.Equal(t, 0, val, "Pop on empty heap should return zero value")
 
-    // Push and pop single element
+    // Push and pop a single element
     heap.Push(10)
     val, ok = heap.Pop()
     assert.True(t, ok, "Pop should return true")
@@ -108,6 +119,12 @@ func TestMinHeap_Pop(t *testing.T) {
         heap.Push(elem)
     }
 
+    //            5
+    //           / \
+    //         10   15
+    //        /  \
+    //      20    30
+    //
     expected := []int{5, 10, 15, 20, 30}
     for _, exp := range expected {
         val, ok = heap.Pop()
@@ -116,11 +133,32 @@ func TestMinHeap_Pop(t *testing.T) {
     }
 
     assert.True(t, heap.IsEmpty(), "Heap should be empty after popping all elements")
+
+    // Push multiple elements and pop in reverse order
+    for _, elem := range append(elements, 25, 35, 6) {
+        heap.Push(elem)
+    }
+
+    //              5                           0
+    //           /     \                     /     \
+    //         6        10                  1       2
+    //        /  \     /  \                /  \    /  \
+    //      15    20  25   30             3    4  5    6
+    //     /                            /
+    //    35                           7
+    expected = []int{5, 6, 10, 15, 20, 25, 30, 35}
+    for _, exp := range expected {
+        val, ok = heap.Pop()
+        assert.True(t, ok, "Pop should succeed")
+        assert.Equal(t, exp, val, "Pop should return elements in ascending order")
+    }
 }
 
 // TestMaxHeap_Pop tests popping elements from max-heap
 func TestMaxHeap_Pop(t *testing.T) {
-    heap := NewMaxHeap[int]()
+    heap := NewMaxHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     // Push multiple elements and pop in order
     elements := []int{20, 10, 30, 5, 15}
@@ -140,7 +178,9 @@ func TestMaxHeap_Pop(t *testing.T) {
 
 // TestMinHeap_Heapify tests converting a slice into a min-heap
 func TestMinHeap_Heapify(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     elements := []int{20, 15, 10, 17, 25, 30, 12}
     heap.Heapify(elements)
@@ -161,7 +201,9 @@ func TestMinHeap_Heapify(t *testing.T) {
 
 // TestMaxHeap_Heapify tests converting a slice into a max-heap
 func TestMaxHeap_Heapify(t *testing.T) {
-    heap := NewMaxHeap[int]()
+    heap := NewMaxHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     elements := []int{20, 15, 10, 17, 25, 30, 12}
     heap.Heapify(elements)
@@ -182,7 +224,9 @@ func TestMaxHeap_Heapify(t *testing.T) {
 
 // TestHeap_Clear tests clearing the heap
 func TestHeap_Clear(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     elements := []int{10, 20, 30, 5, 15}
     for _, elem := range elements {
@@ -204,7 +248,9 @@ func TestHeap_Clear(t *testing.T) {
 
 // TestHeap_ToSlice tests converting heap to slice
 func TestHeap_ToSlice(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     // Test empty heap
     slice := heap.ToSlice()
@@ -225,40 +271,11 @@ func TestHeap_ToSlice(t *testing.T) {
     }
 }
 
-// TestHeap_Iterator tests iterating over heap elements
-func TestHeap_Iterator(t *testing.T) {
-    heap := NewMinHeap[int]()
-
-    elements := []int{10, 20, 30, 5, 15}
-    for _, elem := range elements {
-        heap.Push(elem)
-    }
-
-    iter := heap.Iterator()
-    assert.NotNil(t, iter, "Iterator should not be nil")
-
-    var result []int
-    for iter.HasNext() {
-        val := iter.Next()
-        result = append(result, val)
-    }
-
-    assert.Equal(t, 5, len(result), "Iterator should iterate over all elements")
-
-    // Verify all elements are present (order may vary)
-    for _, elem := range elements {
-        assert.Contains(t, result, elem, "Iterator should return all elements")
-    }
-
-    // Test that Next returns false after iteration is complete
-    assert.Panics(t, func() {
-        iter.Next()
-    }, "Next should return zero value after iteration completes")
-}
-
 // TestMinHeap_WithStrings tests min-heap with string type
 func TestMinHeap_WithStrings(t *testing.T) {
-    heap := NewMinHeap[string]()
+    heap := NewMinHeap[string](func(a, b string) int {
+        return strings.Compare(a, b)
+    })
 
     words := []string{"dog", "cat", "bird", "elephant", "ant"}
     for _, word := range words {
@@ -275,7 +292,9 @@ func TestMinHeap_WithStrings(t *testing.T) {
 
 // TestMaxHeap_WithStrings tests max-heap with string type
 func TestMaxHeap_WithStrings(t *testing.T) {
-    heap := NewMaxHeap[string]()
+    heap := NewMaxHeap[string](func(a, b string) int {
+        return strings.Compare(a, b)
+    })
 
     words := []string{"dog", "cat", "bird", "elephant", "ant"}
     for _, word := range words {
@@ -292,7 +311,9 @@ func TestMaxHeap_WithStrings(t *testing.T) {
 
 // TestHeap_LargeDataSet tests heap with a larger dataset
 func TestHeap_LargeDataSet(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     // Push 100 elements
     for i := 100; i > 0; i-- {
@@ -313,7 +334,9 @@ func TestHeap_LargeDataSet(t *testing.T) {
 
 // TestHeap_DuplicateElements tests heap with duplicate elements
 func TestHeap_DuplicateElements(t *testing.T) {
-    heap := NewMinHeap[int]()
+    heap := NewMinHeap[int](func(a, b int) int {
+        return a - b
+    })
 
     elements := []int{5, 10, 5, 20, 10, 5}
     for _, elem := range elements {

@@ -133,4 +133,17 @@ type Heap[T any] interface {
     //
     // For sorted order, use Pop() repeatedly instead.
     Iterator() iterator.Iterator[T]
+
+    // SortedIterator returns an iterator that traverses elements in sorted order.
+    // This creates a copy of the heap to avoid modifying the original.
+    // For a min-heap, iterates from smallest to largest.
+    // For a max-heap, iterates from largest to smallest.
+    //
+    // Warning: This is expensive as it creates a copy and performs n Pop operations.
+    // Time complexity: O(n log n) total for complete iteration
+    // Space complexity: O(n) for the heap copy
+    SortedIterator() iterator.Iterator[T]
+
+    // Clone returns a copy of the heap.
+    Clone() *ImplHeap[T]
 }

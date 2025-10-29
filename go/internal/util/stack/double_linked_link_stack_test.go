@@ -2,6 +2,8 @@ package stack
 
 import (
     "testing"
+
+    "github.com/stretchr/testify/assert"
 )
 
 // TestNewStackIsEmpty checks the initial state of a newly created stack.
@@ -74,10 +76,9 @@ func TestPeek(t *testing.T) {
 func TestPop(t *testing.T) {
     t.Run("PopFromEmptyStack", func(t *testing.T) {
         stack := NewDoubleLinkedListStack[int]()
-        val, ok := stack.Pop()
-        if ok {
-            t.Errorf("Pop on empty stack should return false, got true with value %d", val)
-        }
+        assert.Panics(t, func() {
+            stack.Pop()
+        }, "Empty stack should Panic")
         if stack.Size() != 0 {
             t.Errorf("Size should remain 0, got %d", stack.Size())
         }
@@ -90,25 +91,25 @@ func TestPop(t *testing.T) {
         stack.Push(3)
 
         // Pop should return elements in LIFO order: 3, 2, 1
-        val, ok := stack.Pop()
-        if !ok || val != 3 {
-            t.Errorf("First Pop expected 3, got %d (ok=%v)", val, ok)
+        val := stack.Pop()
+        if val != 3 {
+            t.Errorf("First Pop expected 3, got %d ", val)
         }
         if stack.Size() != 2 {
             t.Errorf("Size expected 2, got %d", stack.Size())
         }
 
-        val, ok = stack.Pop()
-        if !ok || val != 2 {
-            t.Errorf("Second Pop expected 2, got %d (ok=%v)", val, ok)
+        val = stack.Pop()
+        if val != 2 {
+            t.Errorf("Second Pop expected 2, got %d", val)
         }
         if stack.Size() != 1 {
             t.Errorf("Size expected 1, got %d", stack.Size())
         }
 
-        val, ok = stack.Pop()
-        if !ok || val != 1 {
-            t.Errorf("Third Pop expected 1, got %d (ok=%v)", val, ok)
+        val = stack.Pop()
+        if val != 1 {
+            t.Errorf("Third Pop expected 1, got %d", val)
         }
         if !stack.IsEmpty() {
             t.Error("Stack should be empty after all pops")
@@ -119,9 +120,9 @@ func TestPop(t *testing.T) {
         stack := NewDoubleLinkedListStack[int]()
         stack.Push(42)
 
-        val, ok := stack.Pop()
-        if !ok || val != 42 {
-            t.Errorf("Pop expected 42, got %d (ok=%v)", val, ok)
+        val := stack.Pop()
+        if val != 42 {
+            t.Errorf("Pop expected 42, got %d", val)
         }
         if !stack.IsEmpty() {
             t.Error("Stack should be empty after popping single element")
@@ -136,7 +137,7 @@ func TestPushPopSequence(t *testing.T) {
     stack.Push(1)
     stack.Push(2)
 
-    val, _ := stack.Pop()
+    val := stack.Pop()
     if val != 2 {
         t.Errorf("Expected 2, got %d", val)
     }
@@ -149,17 +150,17 @@ func TestPushPopSequence(t *testing.T) {
         t.Errorf("Peek expected 4, got %d", val)
     }
 
-    val, _ = stack.Pop()
+    val = stack.Pop()
     if val != 4 {
         t.Errorf("Expected 4, got %d", val)
     }
 
-    val, _ = stack.Pop()
+    val = stack.Pop()
     if val != 3 {
         t.Errorf("Expected 3, got %d", val)
     }
 
-    val, _ = stack.Pop()
+    val = stack.Pop()
     if val != 1 {
         t.Errorf("Expected 1, got %d", val)
     }
@@ -181,11 +182,11 @@ func TestStackWithStrings(t *testing.T) {
         t.Errorf("Peek expected 'third', got '%s'", val)
     }
 
-    if val, _ := stack.Pop(); val != "third" {
+    if val := stack.Pop(); val != "third" {
         t.Errorf("Pop expected 'third', got '%s'", val)
     }
 
-    if val, _ := stack.Pop(); val != "second" {
+    if val := stack.Pop(); val != "second" {
         t.Errorf("Pop expected 'second', got '%s'", val)
     }
 
@@ -193,7 +194,7 @@ func TestStackWithStrings(t *testing.T) {
         t.Errorf("Size expected 1, got %d", stack.Size())
     }
 
-    if val, _ := stack.Pop(); val != "first" {
+    if val := stack.Pop(); val != "first" {
         t.Errorf("Pop expected 'first', got '%s'", val)
     }
 
@@ -237,10 +238,7 @@ func TestLargeStack(t *testing.T) {
 
     // Pop and verify LIFO order
     for i := count - 1; i >= 0; i-- {
-        val, ok := stack.Pop()
-        if !ok {
-            t.Fatalf("Pop failed at iteration %d", i)
-        }
+        val := stack.Pop()
         if val != i {
             t.Errorf("Expected %d, got %d", i, val)
         }

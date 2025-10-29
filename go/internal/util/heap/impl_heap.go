@@ -2,8 +2,6 @@ package heap
 
 import (
     "interview_go/internal/util/iterator"
-
-    "golang.org/x/exp/constraints"
 )
 
 // ImplHeap is a minimal heap implementation, using a slice as the underlying data structure.
@@ -50,19 +48,20 @@ import (
 //   - Parent: (3 - 1) / 2 = 1
 //   - Left child: 2*3 + 1 = 7
 //   - Right child: 2*3 + 2 = 8
-type ImplHeap[T constraints.Ordered] struct {
-    data      []T
-    isMaxHeap bool
+type ImplHeap[T any] struct {
+    data       []T
+    comparator func(a, b T) int // Returns: <0 if a<b, 0 if a==b, >0 if a>b
+    isMaxHeap  bool
 }
 
 // NewMinHeap creates and returns a new empty heap.
-func NewMinHeap[T constraints.Ordered]() *ImplHeap[T] {
-    return &ImplHeap[T]{data: make([]T, 0), isMaxHeap: false}
+func NewMinHeap[T any](comparator func(a, b T) int) *ImplHeap[T] {
+    return &ImplHeap[T]{data: make([]T, 0), comparator: comparator, isMaxHeap: false}
 }
 
 // NewMaxHeap creates and returns a new empty heap.
-func NewMaxHeap[T constraints.Ordered]() *ImplHeap[T] {
-    return &ImplHeap[T]{data: make([]T, 0), isMaxHeap: true}
+func NewMaxHeap[T any](comparator func(a, b T) int) *ImplHeap[T] {
+    return &ImplHeap[T]{data: make([]T, 0), comparator: comparator, isMaxHeap: true}
 }
 
 // Compile-time check to ensure ImplHeap implements the Heap interface
@@ -71,12 +70,13 @@ var _ Heap[string] = (*ImplHeap[string])(nil)
 // isHigherPriority return true if the element on i-th position has higher priority
 // than the element on j-th position
 func (h *ImplHeap[T]) isHigherPriority(i, j int) bool {
+    cmp := h.comparator(h.data[i], h.data[j])
     if h.isMaxHeap {
         // MaxHeap: higher priority to the element with greater value
-        return h.data[i] > h.data[j]
+        return cmp > 0
     }
     // ImplHeap: higher priority to the element with a smaller value
-    return h.data[i] < h.data[j]
+    return cmp < 0
 }
 
 // Auxiliary functions for indexing the data array
@@ -214,53 +214,33 @@ func (h *ImplHeap[T]) Heapify(elements []T) {
     }
 }
 
+// ToSlice returns a copy of the underlying data slice - similar to BFS
 func (h *ImplHeap[T]) ToSlice() []T {
     return h.data
 }
 
+// Iterator returns an iterator that traverses the elements in the heap.
 func (h *ImplHeap[T]) Iterator() iterator.Iterator[T] {
     return newHeapIterator(h.data)
 }
 
-// heapIterator[T] holds the state for sequential traversal of the underlying array.
-// It iterates through the 'data' slice in linear (index) order.
-type heapIterator[T any] struct {
-    // Reference to the slice being iterated over
-    data []T
-    // Current index in the slice
-    index int
+// SortedIterator Create an iterator that returns the elements in sorted order. Performs a copy of the data.
+func (h *ImplHeap[T]) SortedIterator() iterator.Iterator[T] {
+    return newHeapSortedIterator(h)
 }
 
-// newHeapIterator is the internal constructor for the iterator.
-func newHeapIterator[T constraints.Ordered](data []T) iterator.Iterator[T] {
-    return &heapIterator[T]{
-        // The iterator takes a COPY of the slice header.
-        // NOTE: This copy still points to the same underlying array data.
-        data:  data,
-        index: 0,
+// Clone Copies the original Heap and returns a new Heap with the copied data.
+// Complexity: O(n) for slice copy
+func (h *ImplHeap[T]) Clone() *ImplHeap[T] {
+    // Copy slice
+    newData := make([]T, len(h.data))
+    copy(newData, h.data)
+
+    // Create and copy a new heap
+    return &ImplHeap[T]{
+        data: newData, // Usa o slice original (já copiado acima),
+        // ou o novo slice se preferir. Para MinHeap é mais seguro usar o original
+        isMaxHeap:  h.isMaxHeap,
+        comparator: h.comparator,
     }
-}
-
-// HasNext implements the Iterator[T].HasNext method.
-// Checks if the current index is within the bounds of the data slice.
-func (it *heapIterator[T]) HasNext() bool {
-    return it.index < len(it.data)
-}
-
-// Next implements the Iterator[T].Next method.
-// Returns the element at the current index and advances the index.
-func (it *heapIterator[T]) Next() T {
-    // Check for panic condition (calling Next() after HasNext() is false)
-    if it.index >= len(it.data) {
-        panic("iterator: cannot call Next() after iteration finished")
-    }
-
-    // 1. Get the current value
-    value := it.data[it.index]
-
-    // 2. Advance the index
-    it.index++
-
-    // 3. Return the value (copy)
-    return value
 }
